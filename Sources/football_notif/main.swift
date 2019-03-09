@@ -5,16 +5,22 @@ import SwiftSoup
 var result_string = ""
 var diff_string=""
 var timer: Timer!
-var base_url="http://www.goaloo.com/CalcTime.aspx?"
+var base_url = "http://www.goaloo.com/CalcTime.aspx?id="
+var corner_url = "http://data.goaloo.com/history/corner.aspx?companyid=8&id="
 var isFinished=false
 
 /*
  Implementing: corner api
- http://data.goaloo.com/history/corner.aspx?id={id}&companyid=8
+
  */
 func get_corner(id:String)
 {
-    
+    let myURLString = corner_url+id
+    guard let myURL = URL(string: myURLString) else {
+        print("Error: \(myURLString) doesn't seem to be a valid URL")
+        return
+    }
+    print(id)
   //  print(try "corner:"+(doc.select("td tr")).get(2).text())
 }
 
@@ -59,10 +65,10 @@ func get_match_status(match_id:String)
     
 }
 
-func crawler(url:String){
+func get_goal(url:String){
     
     let myURLString = url
-    URLCache.shared.removeAllCachedResponses()
+    
     guard let myURL = URL(string: myURLString) else {
         print("Error: \(myURLString) doesn't seem to be a valid URL")
         return
@@ -98,10 +104,7 @@ func crawler(url:String){
                 task.launch()
                 
             }
-            if(!isFinished)
-            {
-               get_match_status(match_id: malform[2])
-            }
+            
         } catch Exception.Error(let type, let message) {
             print(message)
             
@@ -116,11 +119,40 @@ func crawler(url:String){
 }
 print("Enter futbol link:")
 let response = readLine()
+
+var id = (response! as NSString).lastPathComponent.components(separatedBy: ".")
+print("1:Goal\n2:Corner\n3:Goal+Corner")
+let selection = readLine()
 while(true)
 {
     
     DispatchQueue.global(qos: .background).async {
-        crawler(url:response!)
+        //clean network cache
+        URLCache.shared.removeAllCachedResponses()
+        //check match status
+        if(!isFinished)
+        {
+            
+            get_match_status(match_id:id[0])
+        }
+        //goal/corner statuss
+        switch(Int(selection!))
+        {
+        case 1:
+            //goal only
+            get_goal(url:response!)
+        
+            break;
+        case 2:
+            //corener only
+            get_corner(id: id[0])
+            break;
+        case 3:
+            //goal+corner
+            break;
+        default:
+            break;
+        }
     }
      sleep(10)
     if(isFinished)
